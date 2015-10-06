@@ -45,7 +45,7 @@ prob += sum(sum(d1) for d1 in ds) <= num_holes
 
 # Maximizing profit from randomly valued dirt.
 from random import random
-prob += sum(sum(d*random() for d in d1) for d1 in ds)
+prob += sum(sum(d*random() for d in d1) for d1 in ds), "objective"
 
 prob.solve()
 for z in range(depth):
