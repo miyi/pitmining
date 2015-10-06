@@ -48,7 +48,10 @@ from random import random
 prob += sum(sum(d*random() for d in d1) for d1 in ds), "objective"
 
 prob.solve()
-for z in range(depth):
-    for y in range(width):
-        print(int(pulp.value(ds[z][y])), end='')
-    print()
+
+# Plot an image
+from matplotlib import pyplot
+image = [[pulp.value(d) for d in d1] for d1 in ds]
+pyplot.imshow(image, cmap='copper')
+pyplot.show()
+
