@@ -2,59 +2,71 @@
 #include <lemon/list_graph.h>
 #include <lemon/preflow.h>
 #include <limits.h>
+#include <stdlib.h>
+#include <time.h>
 
 using namespace lemon;
 
-int main()
+int main(int argc, char **argv)
 {
+  if (argc < 2) {
+    std::cout << "Usage: " << argv[0] << " <width>" << std::endl;
+    exit(1);
+  }
+  int width = atoi(argv[1]);
+  int depth = width / 2;
+  srand(time(NULL));
+
   ListDigraph g;
 
   auto s = g.addNode();
   auto t = g.addNode();
 
-  auto m00 = g.addNode();
-  auto m01 = g.addNode();
-  auto m02 = g.addNode();
-  auto m03 = g.addNode();
-  auto m11 = g.addNode();
-  auto m12 = g.addNode();
+  std::vector<std::vector<ListDigraph::Node> > node_mat;
+  lemon::ListDigraph::ArcMap<int> cap(g);
 
-  lemon::ListDigraph::ArcMap<int> length(g);
+  for (int z = 0; z < depth; z++) {
+    std::vector<ListDigraph::Node> node_row;
+    for (int y = 0; y < width - 2*z; y++) {
+      if (y <= width - 2*z) {
+        // Create a node
+        auto node = g.addNode();
+        node_row.push_back(node);
 
-  // Profitable blocks
-  auto s_m00 = g.addArc(s, m00);
-  auto s_m01 = g.addArc(s, m01);
-  auto s_m11 = g.addArc(s, m11);
-  length[s_m00] = 1;
-  length[s_m01] = 1;
-  length[s_m11] = 2;
+        // Determine value, and link to source or target
+        auto value = (rand() - RAND_MAX / 2) / (RAND_MAX / 100);
 
-  // Costly blocks
-  auto t_m02 = g.addArc(m02, t);
-  auto t_m03 = g.addArc(m03, t);
-  auto t_m12 = g.addArc(t, m12);
-  length[t_m02] = 1;
-  length[t_m03] = 1;
-  length[t_m12] = 1;
+        if (value > 0) {
+          cap[g.addArc(s, node)] = value;
+        } else {
+          cap[g.addArc(node, t)] = -value;
+        }
 
-  // I'm guessing if I don't give a capacity, I get infinity?
-  length[g.addArc(m11, m00)] = INT_MAX;
-  length[g.addArc(m11, m01)] = INT_MAX;
-  length[g.addArc(m11, m02)] = INT_MAX;
-  length[g.addArc(m12, m01)] = INT_MAX;
-  length[g.addArc(m12, m02)] = INT_MAX;
-  length[g.addArc(m12, m03)] = INT_MAX;
+        // Link to nodes above
+        if (z > 0) {
+          cap[g.addArc(node, node_mat[z-1][y])] = INT_MAX;
+          cap[g.addArc(node, node_mat[z-1][y+1])] = INT_MAX;
+          cap[g.addArc(node, node_mat[z-1][y+2])] = INT_MAX;
+        }
+      }
+    }
+    node_mat.push_back(node_row);
+  }
 
   // Now call the min cut solver?
-  auto preflower = Preflow<lemon::ListDigraph>(g, length, s, t);
+  auto preflower = Preflow<lemon::ListDigraph>(g, cap, s, t);
   preflower.runMinCut();
 
-  if (preflower.minCut(m00)) std::cout << "m00" << std::endl;
-  if (preflower.minCut(m01)) std::cout << "m01" << std::endl;
-  if (preflower.minCut(m02)) std::cout << "m02" << std::endl;
-  if (preflower.minCut(m03)) std::cout << "m03" << std::endl;
-  if (preflower.minCut(m11)) std::cout << "m11" << std::endl;
-  if (preflower.minCut(m12)) std::cout << "m12" << std::endl;
+  for (auto row = node_mat.begin(); row != node_mat.end(); ++row) {
+    for (auto node = row->begin(); node != row->end(); ++node) {
+      if (preflower.minCut(*node)) {
+        std::cout << " ";
+      } else {
+        std::cout << "X";
+      }
+    }
+    std::cout << std::endl;
+  }
 
   return 0;
 }
