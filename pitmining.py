@@ -20,7 +20,7 @@ for z in range(depth):
     arr = []
     for y in range(width):
         name = "d{:3}{:3}".format(z, y)
-        arr.append(pulp.LpVariable(name, 0, 1, cat=pulp.LpInteger))
+        arr.append(pulp.LpVariable(name, cat=pulp.LpBinary))
     ds.append(arr)
 
 prob = pulp.LpProblem("pitmine", pulp.LpMaximize)
