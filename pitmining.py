@@ -5,9 +5,8 @@ import math
 
 try:
     width = int(sys.argv[1])
-    num_holes = int(sys.argv[2])
 except IndexError:
-    print("usage: {} <dim> <m3>".format(sys.argv[0]))
+    print("usage: {} <dim>".format(sys.argv[0]))
     exit(1)
 
 # Since the maximum angle is 45°, we only need our grid to be half as deep as
@@ -40,12 +39,9 @@ for y in range(width):
         else:
             prob += ds[z][y] <= 0
 
-# Dig-time constraint
-prob += sum(sum(d1) for d1 in ds) <= num_holes
-
 # Maximizing profit from randomly valued dirt.
-from random import random
-prob += sum(sum(d*random() for d in d1) for d1 in ds), "objective"
+from random import uniform
+prob += sum(sum(d*uniform(-1, 1) for d in d1) for d1 in ds), "objective"
 
 prob.solve()
 
