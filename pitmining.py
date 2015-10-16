@@ -51,7 +51,7 @@ prob.solve()
 
 # Plot an image
 from matplotlib import pyplot
-image = [[pulp.value(d) for d in d1] for d1 in ds]
-pyplot.imshow(image, cmap='copper')
-pyplot.show()
+import numpy
+image = numpy.array([[int(pulp.value(d)) for d in d1] for d1 in ds])
+pyplot.imsave('output.png', image, cmap='copper')
 
