@@ -47,10 +47,15 @@ def main():
                 prob += ds[z][y] <= ds[z-1][y+1]
 
     # Maximizing profit from randomly valued dirt.
-    from random import uniform
-    prob += sum(sum(d*uniform(-1, 1) for d in d1) for d1 in ds), "objective"
+    from random import uniform, seed
+    seed(8) # Tried seeds until I got a "nice" mine.
+    values = [[uniform(-1, 1) for i in range(width)] for j in range(depth)]
 
-    prob.solve()
+    prob += sum(sum(d*v for d, v in zip(d1,v1)) for d1,v1 in
+            zip(ds, values)), "objective"
+
+    outcome = prob.solve()
+    print(pulp.LpStatus[outcome])
 
     # Plot an image
     from matplotlib import pyplot
