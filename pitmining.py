@@ -150,7 +150,7 @@ lamb = 1.03
 def main():
     try:
         filename = sys.argv[1]
-        if len(sys.argv) > 3:
+        if len(sys.argv) == 3:
             scale = int(sys.argv[2])
         else:
             scale = 20
