@@ -5,9 +5,21 @@ import sys
 import math
 import numpy as np
 import pandas
+from tqdm import tqdm
 
-def block_profit(grade):
-    return grade - .1
+#fixed cost per block is $1.66/t, here we will assume its 1.66 perblock
+fixed = 1.66
+#process cost is prices at 5.6/t, we will assume its 5.6 perblock
+process = 5.6
+#copper price as of 31/05/2015 is 6294.78/t, again we will assume its per block
+price = 6294.78
+
+def block_profit(cu):
+    # grade is by percent
+    return price * cu / 100 - process - fixed
+
+def block_profit_simple(cu):
+    return cu - .1
 
 def load_data(filename, scale=1):
     print("Loading data...", end='')
@@ -34,10 +46,7 @@ def load_data(filename, scale=1):
     df['profit'] = block_profit(df.cu)
     print("done")
 
-    print("Converting dataframe to image...", end='')
-    sys.stdout.flush()
     image = df_to_image(df)
-    print("done")
     return image
 
 def dropwhile(pred, it, last=None):
@@ -77,7 +86,7 @@ def df_to_image(df):
     profit = df.columns.get_loc("profit") + 1
 
     row = None
-    for z in range(zlim):
+    for z in tqdm(range(zlim), "Convert df to image", leave=True):
         for y in range(ylim):
             for x in range(xlim):
                 def same_pixel(row):
@@ -99,13 +108,11 @@ def df_to_image(df):
 def do_pitmine(price):
     zlim,ylim,xlim = price.shape
 
-    print("Formulating LP...", end='')
-    sys.stdout.flush()
     prob = pulp.LpProblem("pitmine", pulp.LpMaximize)
 
     # Create a dict of variables "d_zyx"
     ds = {}
-    for z in range(zlim):
+    for z in tqdm(range(zlim), "Formulating LP variables", leave=True):
         for y in range(ylim):
             for x in range(xlim):
                 if (z <= y < ylim - z) and (z <= x < xlim - z):
@@ -141,11 +148,10 @@ def do_pitmine(price):
 
     # Maximizing profit
     obj = 0
-    for z,y,x in ds:
+    for z,y,x in tqdm(ds, "Formulating Objective Function", leave=True):
         obj += ds[z,y,x] * price[z,y,x]
 
     prob += obj
-    print("done")
 
     print("Solving LP...", end='')
     sys.stdout.flush()
