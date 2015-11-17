@@ -107,6 +107,7 @@ def df_to_image(df):
 
 def do_pitmine(price):
     zlim,ylim,xlim = price.shape
+    print("Optimizing in {} variables".format(zlim*ylim*xlim))
 
     prob = pulp.LpProblem("pitmine", pulp.LpMaximize)
 
