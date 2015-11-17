@@ -10,8 +10,13 @@ def block_profit(grade):
     return grade - .1
 
 def load_data(filename, scale=1):
+    print("Loading data...", end='')
+    sys.stdout.flush()
     df = pandas.read_csv(filename).drop_duplicates()
+    print("done")
 
+    print("Computing block values...", end='')
+    sys.stdout.flush()
     x_spacing = 20 * scale
     y_spacing = 20 * scale
     z_spacing = 15 * scale
@@ -27,8 +32,31 @@ def load_data(filename, scale=1):
     df.zcen /= z_spacing
 
     df['profit'] = block_profit(df.cu)
+    print("done")
 
-    return df_to_image(df)
+    print("Converting dataframe to image...", end='')
+    sys.stdout.flush()
+    image = df_to_image(df)
+    print("done")
+    return image
+
+def dropwhile(pred, it, last=None):
+    """Sorry itertools, but you are way too slow. :(
+
+    Different:
+     * perform in-place, for performance
+     * immediately return first value failing predicate
+     * store previous value as function parameter."""
+
+    try:
+        if last is None:
+            last = next(it)
+
+        while pred(last):
+            last = next(it)
+    except StopIteration:
+        pass
+    return last
 
 def df_to_image(df):
     xlim = int(np.floor(df.xcen.max()) + 1)
@@ -38,8 +66,8 @@ def df_to_image(df):
     i = 0
     niter = zlim * ylim * xlim
     arr = np.zeros((zlim, ylim, xlim))
+    arr[:,:,:] = block_profit(0)
 
-    print("Converting dataframe to image...")
     df_iter = df.sort(["zcen", "ycen", "xcen"]).itertuples()
 
     # df.columns doesn't include the index column, added by itertuples().
@@ -48,26 +76,18 @@ def df_to_image(df):
     zcen = df.columns.get_loc("zcen") + 1
     profit = df.columns.get_loc("profit") + 1
 
-    from itertools import dropwhile
+    row = None
     for z in range(zlim):
-        df_iter = dropwhile(lambda row: row[zcen] < z, df_iter)
         for y in range(ylim):
-            df_iter = dropwhile(lambda row: row[ycen] < y, df_iter)
             for x in range(xlim):
-                print("{} / {}".format(i, niter), end="\r")
-                sys.stdout.flush()
-                i += 1
+                def same_pixel(row):
+                    """Use tuple ordering to determine whether we're ahead
+                    or behind the dataframe."""
+                    image_index = (z,y,x)
+                    df_index = (row[zcen], row[ycen], row[xcen])
+                    return df_index < image_index
 
-                # BUG: z and y *can* change here.
-                df_iter = dropwhile(lambda row: row[xcen] < x, df_iter)
-
-                # Don't want to affect the position, so read a copy of the
-                # iterator.
-                try:
-                    row = next(iter(df_iter))
-                except StopIteration:
-                    # No more data in the dataframe.
-                    pass
+                row = dropwhile(same_pixel, df_iter, row)
 
                 if row[xcen] == x and row[ycen] == y and row[zcen] == z:
                     arr[z,y,x] = row[profit]
@@ -79,6 +99,8 @@ def df_to_image(df):
 def do_pitmine(price):
     zlim,ylim,xlim = price.shape
 
+    print("Formulating LP...", end='')
+    sys.stdout.flush()
     prob = pulp.LpProblem("pitmine", pulp.LpMaximize)
 
     # Create a dict of variables "d_zyx"
@@ -119,7 +141,10 @@ def do_pitmine(price):
 
     # Maximizing profit
     prob += sum(ds[z,y,x] * price[z,y,x] for z,y,x in ds)
+    print("done")
 
+    print("Solving LP...", end='')
+    sys.stdout.flush()
     outcome = prob.solve()
     print(pulp.LpStatus[outcome])
 
