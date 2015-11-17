@@ -140,7 +140,11 @@ def do_pitmine(price):
                 addconstraint(1, 1)
 
     # Maximizing profit
-    prob += sum(ds[z,y,x] * price[z,y,x] for z,y,x in ds)
+    obj = 0
+    for z,y,x in ds:
+        obj += ds[z,y,x] * price[z,y,x]
+
+    prob += obj
     print("done")
 
     print("Solving LP...", end='')
