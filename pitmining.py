@@ -21,8 +21,8 @@ multiplier = 15900
 
 def block_profit(cu):
     # grade is by percent
-    # return multiplier(price * recovery * cu / 100 - process - fixed)
-    return price * recovery * cu / 100 - process - fixed
+    return multiplier(price * recovery * cu / 100 - process - fixed)
+    # return price * recovery * cu / 100 - process - fixed
 
 def block_profit_simple(cu):
     return cu - .1
