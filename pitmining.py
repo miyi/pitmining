@@ -13,10 +13,16 @@ fixed = 1.66
 process = 5.6
 #copper price as of 31/05/2015 is 6294.78/t, again we will assume its per block
 price = 6294.78
+#recovery
+recovery = 0.88
+#multiplier, tonnage of material per block, but maybe 15900 s a bit high?
+multiplier = 15900
+
 
 def block_profit(cu):
     # grade is by percent
-    return price * cu / 100 - process - fixed
+    # return multiplier(price * recovery * cu / 100 - process - fixed)
+    return price * recovery * cu / 100 - process - fixed
 
 def block_profit_simple(cu):
     return cu - .1
