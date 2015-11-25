@@ -5,7 +5,7 @@ from matplotlib import pyplot
 from minemaker import *
 
 class The_Pit:
-	def __init__(self, width, price, cu_mean=0.01, sd = 10):
+	def __init__(self, width, price, cu_mean=0.2, sd = 10):
 		self.price = price
 		self.width = int(width)
 		self.depth = int(width/2)
